@@ -15,40 +15,42 @@ HUB_NAME = "Pybricks Hub"
 LM_STUDIO_URL = "http://localhost:1234/v1/chat/completions"
 MODEL_NAME = "google/gemma-3-1b"
 
+recognizer = sr.Recognizer()
+microphone = sr.Microphone()
 
-def listen_for_command():
-    recognizer = sr.Recognizer()
-    microphone = sr.Microphone()
 
+def setup_microphone():
+    global recognizer, microphone
     print("Calibrating microphone...")
     with microphone as source:
         recognizer.adjust_for_ambient_noise(source, duration=1)
+    print("Microphone ready!")
 
-    print("Listening for voice command...")
-    with microphone as source:
-        try:
+
+def listen_for_command():
+    global recognizer, microphone
+    try:
+        with microphone as source:
             audio = recognizer.listen(source, timeout=5)
-            text = recognizer.recognize_google(audio)
-            print(f"Recognized: {text}")
-            return text
-        except sr.WaitTimeoutError:
-            print("No speech detected")
-            return None
-        except sr.UnknownValueError:
-            print("Could not understand audio")
-            return None
-        except Exception as e:
-            print(f"Microphone error: {e}")
-            return None
+        text = recognizer.recognize_google(audio)
+        print(f"Recognized: {text}")
+        return text
+    except sr.WaitTimeoutError:
+        return None
+    except sr.UnknownValueError:
+        return None
+    except Exception as e:
+        print(f"Microphone error: {e}")
+        return None
 
 
 async def keepalive_task(client, disconnected):
     """Send periodic keepalive to maintain BLE connection"""
     while not disconnected.is_set():
         try:
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
             if not disconnected.is_set() and client.is_connected:
-                await client.pair()
+                await client.read_gatt_char(PYBRICKS_COMMAND_EVENT_CHAR_UUID)
         except Exception:
             pass
 
@@ -59,10 +61,10 @@ def translate_to_command(text: str) -> str | None:
 
     system_prompt = """You are a command translator for a LEGO robot.
 Translate the user's voice command to exactly one of these words:
-- "fwd" for forward, go, move ahead, advance
-- "rev" for backward, reverse, go back, retreat
+- "fwd" for forward, go, move ahead, advance, etc.
+- "rev" for backward, reverse, go back, retreat, etc.
 
-Respond with ONLY the command word, nothing else."""
+Respond with ONLY the command word ("fwd", "rev"), nothing else."""
 
     payload = {
         "model": MODEL_NAME,
@@ -102,6 +104,7 @@ async def run_voice_control():
         disconnected.set()
 
     def handle_rx(_, data: bytearray):
+        print(f"Received data: {data}")
         if data[0] == 0x01:
             payload = data[1:]
             if payload == b"rdy":
@@ -121,8 +124,6 @@ async def run_voice_control():
     async with BleakClient(device, handle_disconnect) as client:
         await client.start_notify(PYBRICKS_COMMAND_EVENT_CHAR_UUID, handle_rx)
 
-        keepalive = asyncio.create_task(keepalive_task(client, disconnected))
-
         async def send_command(data):
             await ready_event.wait()
             ready_event.clear()
@@ -134,14 +135,24 @@ async def run_voice_control():
         print("\nStart the program on the hub now with the button.")
         print("Waiting for hub to be ready...\n")
 
-        await ready_event.wait()
-        print("\nVoice control ready! Say 'forward' or 'backward'")
+        try:
+            await asyncio.wait_for(ready_event.wait(), timeout=30)
+        except asyncio.TimeoutError:
+            print("Timeout waiting for hub. Make sure hub program is running.")
+            sys.exit(1)
+
+        print("\nVoice control ready! Setting up microphone...")
+
+        try:
+            setup_microphone()
+        except Exception as e:
+            print(f"Microphone setup failed: {e}")
+
+        print("Listening... Say 'forward' or 'backward'\n")
 
         while not disconnected.is_set():
             try:
-                text = await asyncio.wait_for(
-                    asyncio.to_thread(listen_for_command), timeout=10
-                )
+                text = listen_for_command()
                 if text:
                     command = await asyncio.to_thread(translate_to_command, text)
                     if command:
@@ -152,10 +163,6 @@ async def run_voice_control():
                 continue
             except asyncio.CancelledError:
                 break
-
-        keepalive.cancel()
-        with suppress(asyncio.CancelledError):
-            await keepalive
 
 
 if __name__ == "__main__":
