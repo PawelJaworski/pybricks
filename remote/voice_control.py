@@ -82,6 +82,10 @@ Respond with ONLY the command word, nothing else."""
 
         if command in ("fwd", "rev"):
             return command
+        elif "forward" in command or "advanc" in command:
+            return "fwd"
+        elif "backward" in command or "reverse" in command or "retreat" in command:
+            return "rev"
         else:
             print(f"Unexpected response: {command}")
             return None
@@ -146,6 +150,8 @@ async def run_voice_control():
                     command = await asyncio.to_thread(translate_to_command, text)
                     if command:
                         await send_command(command.encode())
+                        await asyncio.sleep(3)
+                        await send_command(b"stp")
             except asyncio.TimeoutError:
                 continue
             except asyncio.CancelledError:

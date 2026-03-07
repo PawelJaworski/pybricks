@@ -1,11 +1,11 @@
 from pybricks.hubs import TechnicHub
 from pybricks.pupdevices import Motor
-from pybricks.parameters import Port
+from pybricks.parameters import Port, Color
 from pybricks.tools import wait
 from usys import stdin, stdout
 from uselect import poll
 
-MOTOR_SPEED = 10
+MOTOR_SPEED = 50
 
 hub = TechnicHub()
 motor = Motor(Port.A)
@@ -26,6 +26,9 @@ while True:
         stdout.buffer.write(b"OK")
     elif cmd == b"rev":
         motor.dc(-MOTOR_SPEED)
+        stdout.buffer.write(b"OK")
+    elif cmd == b"stp":
+        motor.stop()
         stdout.buffer.write(b"OK")
     elif cmd == b"bye":
         break
