@@ -104,7 +104,6 @@ async def run_voice_control():
         disconnected.set()
 
     def handle_rx(_, data: bytearray):
-        print(f"Received data: {data}")
         if data[0] == 0x01:
             payload = data[1:]
             if payload == b"rdy":
