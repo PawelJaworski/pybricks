@@ -5,6 +5,7 @@
 This is a small Python project for controlling LEGO Technic Hub motors from a Mac via Bluetooth LE. It consists of:
 - `hub_listener.py` - MicroPython program that runs on the LEGO Technic Hub
 - `mac_sender.py` - Python program that runs on Mac and communicates with the hub via BLE
+- `voice_control.py` - Voice-controlled program using microphone + LM Studio
 
 ## Development Commands
 
@@ -23,14 +24,15 @@ pip install -r requirements.txt
 ### Running the Application
 ```bash
 source .venv/bin/activate
-python3 mac_sender.py
+python3 mac_sender.py   # Test script - sends fwd/rev commands
+python3 voice_control.py  # Voice control via microphone + LM Studio
 ```
 
 ### Testing
 There are currently no automated tests in this project. To test manually:
 1. Upload `hub_listener.py` to the hub via https://code.pybricks.com
 2. Start the hub program (press hub button, wait for YELLOW light)
-3. Run `python3 mac_sender.py` on Mac
+3. Run `python3 mac_sender.py` or `python3 voice_control.py` on Mac
 
 ### Linting/Type Checking
 No formal linting or type checking is configured. If adding, consider:
@@ -39,6 +41,12 @@ No formal linting or type checking is configured. If adding, consider:
 - `black .` for formatting
 
 Run these before committing if you choose to add them.
+
+## Documentation
+When adding new files, dependencies, or changing architecture:
+- Update `README.md` with new usage instructions
+- Update `requirements.txt` with new dependencies
+- Update this file (AGENTS.md) if adding new patterns or conventions
 
 ## Code Style Guidelines
 
@@ -100,7 +108,8 @@ remote/
 ├── README.md           # Project documentation
 ├── hub_listener.py     # MicroPython code for LEGO hub
 ├── mac_sender.py       # Python code for Mac
-├── requirements.txt    # Python dependencies (bleak>=0.20.0)
+├── voice_control.py    # Voice control via microphone + LM Studio
+├── requirements.txt    # Python dependencies (bleak>=0.20.0, SpeechRecognition, pyaudio, requests)
 └── setup.sh            # Setup script
 ```
 

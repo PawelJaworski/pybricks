@@ -9,7 +9,8 @@ Control LEGO Technic Hub motor from Mac via Bluetooth LE.
 
 ## Files
 - `hub_listener.py` - Program to upload to the hub
-- `mac_sender.py` - Program to run on Mac
+- `mac_sender.py` - Program to run on Mac (test script)
+- `voice_control.py` - Voice-controlled program using microphone + LM Studio
 - `setup.sh` - Setup script
 - `requirements.txt` - Python dependencies
 
@@ -49,6 +50,26 @@ Edit `mac_sender.py` to change commands:
 - `b"fwd"` - motor forward
 - `b"rev"` - motor reverse
 - `b"bye"` - stop and exit
+
+### Voice Control (voice_control.py)
+
+Voice control uses microphone input + LM Studio to translate speech to commands.
+
+**Prerequisites:**
+1. LM Studio running with `google/gemma-3-1b` model loaded
+2. Start LM Studio's local server (port 1234)
+
+**Usage:**
+```bash
+source .venv/bin/activate
+python3 voice_control.py
+```
+
+The program will:
+1. Connect to the hub
+2. Wait for hub to be ready
+3. Listen for voice commands and translate via LM Studio
+4. Send "fwd" or "rev" commands based on your speech
 
 ## Hub Light Colors
 | Color | Status |
