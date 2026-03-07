@@ -82,10 +82,6 @@ Respond with ONLY the command word, nothing else."""
 
         if command in ("fwd", "rev"):
             return command
-        elif "forward" in command or "advanc" in command:
-            return "fwd"
-        elif "backward" in command or "reverse" in command or "retreat" in command:
-            return "rev"
         else:
             print(f"Unexpected response: {command}")
             return None
